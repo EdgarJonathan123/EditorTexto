@@ -19,9 +19,7 @@
         call ReadString
     endm
 	imprimir macro
-    	mov ah,02h
-    	mov dl,bl
-    	int 21h
+		call PrintAl
 	endm
 ;===================================
    iniciarDs macro 
@@ -71,6 +69,16 @@ crearF macro ruta, handle
 	jc ErrorCrear
 	mov handle, ax
 endm
+
+crearReporteFinal macro
+	mov ah, 3ch
+	mov cx, 00h
+	lea dx, rutaRFinal
+	int 21h
+	jc ErrorCrear
+	mov ptrRFinal, ax
+endm
+
 ;====================================
 escribirF macro handle, numBytes, buffer
 	mov ah, 40h
@@ -80,7 +88,24 @@ escribirF macro handle, numBytes, buffer
 	int 21h
 	jc ErrorEscribir
 endm
+
+escribirRFinal macro numBytes, buffer
+	mov ah, 40h
+	mov bx, ptrRFinal
+	mov cx, numBytes
+	lea dx, buffer
+	int 21h
+	jc ErrorEscribir
+endm
 ;====================================
+
+cerrarRFinal macro
+    mov ah,3eh
+    mov bx,ptrRFinal
+    int 21h
+    jc ErrorCerrar
+endm
+
 
 cerrarF macro Handle
     mov ah,3eh
@@ -100,12 +125,18 @@ endm
         call LetraCapital
 	endm
 
+	InvertirP macro cadena
+		mov dx,offset cadena
+		push dx
+        call Recorrer
+	endm
+
 ;====================================
 AMinuscula macro arreglo
 
 LOCAL continuar, finalizar, MAYUSCULA, MAYOR,MENOR ,AUMENTAR
 
-xor di,di 
+	xor di,di 
 
     continuar:
 
@@ -146,44 +177,44 @@ endm
 
 AMayuscula macro arreglo
 
-LOCAL continuar, finalizar, MAYUSCULA, MAYOR,MENOR ,AUMENTAR
+	LOCAL continuar, finalizar, MAYUSCULA, MAYOR,MENOR ,AUMENTAR
 
-xor di,di 
+	xor di,di 
 
-    continuar:
+    	continuar:
 
-        cmp arreglo[di],24h
-            je finalizar
-        jmp MAYOR
+        	cmp arreglo[di],24h
+            	je finalizar
+        	jmp MAYOR
 
 
-    MAYOR: 
-    ; ARREGLRO[DI]>=a
-        cmp arreglo[di],61H
-            jae MENOR 
-        jmp AUMENTAR    
+    	MAYOR: 
+    	; ARREGLRO[DI]>=a
+        	cmp arreglo[di],61H
+            	jae MENOR 
+        	jmp AUMENTAR    
     
-    MENOR:
-     ; ARREGLRO[DI]=<z
-        cmp arreglo[di],7AH
+    	MENOR:
+     	; ARREGLRO[DI]=<z
+        	cmp arreglo[di],7AH
 			jbe MINUSCULA
         jmp AUMENTAR        
 
-	MINUSCULA:
-		mov al,arreglo[di]
-		mov ah,20h
+		MINUSCULA:
+			mov al,arreglo[di]
+			mov ah,20h
 
-		sub al,ah
+			sub al,ah
 
-		mov arreglo[di],al
+			mov arreglo[di],al
     
         
-    AUMENTAR:
-        inc di
-        jmp continuar
+    	AUMENTAR:
+        	inc di
+        	jmp continuar
        
 
-    finalizar: 
+    	finalizar: 
     
 
 
@@ -203,5 +234,10 @@ contarElementos macro arreglo   ;en di te devuelve el numero de elementos del ar
         inc di
         jmp continuar
     finalizar: 
-        dec di
+endm
+
+
+sizeCadena macro cadena
+        push offset cadena              ;Enviamos parameter1
+    	call Str_length                 ;EAX = longitud de la cadena
 endm

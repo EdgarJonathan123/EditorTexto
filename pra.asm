@@ -1,4 +1,5 @@
 include P3M.asm ; archivo con los macros a utilizar
+;--------Ensamblador MASM arquitectura 80286
 
 ;================= DECLARACION TIPO DE EJECUTABLE ================
     .model small , stdcall
@@ -16,27 +17,8 @@ include P3M.asm ; archivo con los macros a utilizar
     .data 
 ;================= FIN TIPO DE EJECUTABLE ========================
 ;================ SECCION DE DATOS ================================
-    msm0     db  '***UNIVERSIDAD DE SANCARLOS DE GUATEMALA***',0
-    msm1     db  'FACULTAD DE INGENIRIA',0
-    msm2     db  'CIENCIAS Y SISTEMAS',0
-    msm3     db  'ARQUITECTURA DE COMPUTADORES  Y ENSAMBLADORES 1',0
-    msm4     db  'SECCION B',0
-    msm5     db  'NOMBRE: EDGAR JONATHAN ARRECIS MARTINEZ',0
-    msm6     db  'CARNTE: 201602633',0
-    msm7     db  'TAREA PRACTICA 3',0
-    msm8     db  '****Menu Principal *****',0
-    msm9     db  '1) Cargar Texto ',0
-    msm10    db  '2) A Mayuscula',0
-    msm11    db  '3) A Minuscula',0
-    msm12    db  '4) A Capital',0
-    msm13    db  '5) Buscar y Reemplazar',0
-    msm14    db  '6) Invertir Palabras',0
-    msm15    db  '7) Reporte Diptongos',0
-    msm16    db  '8) Reporte Hiatos',0
-    msm17    db  '9) Reporte Triptongos',0 
-    msm18    db  '10) Reporte Final',0
-    msm19    db  '11) Salir',0
-
+    msm0     db  '***UNIVERSIDAD DE SANCARLOS DE GUATEMALA***',13,10,'FACULTAD DE INGENIRIA',13,10,'CIENCIAS Y SISTEMAS',13,10,'ARQUITECTURA DE COMPUTADORES  Y ENSAMBLADORES 1',13,10,'SECCION B',13,10,'NOMBRE: EDGAR JONATHAN ARRECIS MARTINEZ',13,10,'CARNTE: 201602633',13,10,'TAREA PRACTICA 3',13,10,0
+    msm8     db  '****Menu Principal *****',13,10,'1) Cargar Texto ',13,10,'2) A Mayuscula',13,10,'3) A Minuscula',13,10,'4) A Capital',13,10,'5) Buscar y Reemplazar',13,10,'6) Invertir Palabras',13,10,'7) Reporte Diptongos',13,10,'8) Reporte Hiatos',13,10,'9) Reporte Triptongos',13,10,'10) Reporte Final',13,10,'11) Salir',0
     msm20    db  'selecciono -> carga Masiva',0
     msm21    db  'selecciono -> a mayuscula',0
     msm22    db  'selecciono -> a minuscula',0
@@ -49,8 +31,6 @@ include P3M.asm ; archivo con los macros a utilizar
     msm29    db  'selecciono -> reporte reporte final',0
     msm30    db  'selecciono -> salir',0
 
-    bucle    db 'estamos en el bucle alv ',0
-    finfuncion db'estamos al final de la funcion antes del return alv',0
     txt     db ', es letra',0
 
     salto db 13,10,0
@@ -77,12 +57,21 @@ include P3M.asm ; archivo con los macros a utilizar
     ;---------------------Arreglos---------------------------
     rutaArchivo db 100 dup(0)
     bufferLectura db 5000 dup(0)
-    bufferAux     db 5000 dup(0)
-    token         db 100  dup(0)
+    tokenAux       db 100  dup(0)
     bufferEscritura db 100 dup(0)
     ;---------------------Ficheros---------------------------
     handleFichero dw ?
     handle2 dw ?
+
+    ;-------Variables para reporte final
+    RF3 db  13,10,'------------Letra Capital----------------------',13,10,0
+    RF2 db  13,10,'------------A Minuscula -----------------------',13,10,0
+    RF1 db  13,10,'------------A Mayuscula -----------------------',13,10,0
+    RF4 db  13,10,'------------Invertir Palabra-------------------',13,10,0
+
+    ptrRFinal dw ?
+    rutaRFinal db'RFinal.txt',0
+    bufferRFinal db 5000 dup(0)
 
 ;===================== FIN  DE DATOS ==============================
 ;----------------------Segmento de codigo---------------------------
@@ -90,30 +79,14 @@ include P3M.asm ; archivo con los macros a utilizar
 ;================== SECCION DE CODIGO =============================
     main proc
         IniciarDs
+        crearReporteFinal
+        contarElementos msm0
+        escribirRFinal di, msm0
 
 
         menuprincipal: ; etiqueta de prueba
             println msm0
-            println msm1
-            println msm2
-            println msm3
-            println msm4
-            println msm5
-            println msm6
-            println msm7
-            println salto
             println msm8
-            println msm9
-            println msm10
-            println msm11
-            println msm12
-            println msm13
-            println msm14
-            println msm15
-            println msm16
-            println msm17
-            println msm18
-            println msm19
             print   tab
             getchar
 
@@ -150,13 +123,14 @@ include P3M.asm ; archivo con los macros a utilizar
             print  tab
             read rutaArchivo
 	    	abrirF rutaArchivo, handleFichero
+		    leerF handleFichero, SIZEOF bufferLectura, bufferLectura
+            cerrarF handleFichero            
             print msmsucces1
             getchar
         jmp menuprincipal
     
         MAYUSCULA:
             println msm21
-		    leerF handleFichero, SIZEOF bufferLectura, bufferLectura
 
             print corA
             print bufferLectura
@@ -167,12 +141,17 @@ include P3M.asm ; archivo con los macros a utilizar
             print corA
             print bufferLectura
             print corC
+
+            contarElementos RF1
+            escribirRFinal di, RF1
+            contarElementos bufferLectura
+            escribirRFinal di, bufferLectura
+
             getchar
         jmp menuprincipal
 
         MINUS:
             println msm22
-		    leerF handleFichero, SIZEOF bufferLectura, bufferLectura
 
             print corA
             print bufferLectura
@@ -183,13 +162,19 @@ include P3M.asm ; archivo con los macros a utilizar
             print corA
             print bufferLectura
             print corC
+
+            contarElementos RF2
+            escribirRFinal di, RF2
+            contarElementos bufferLectura
+            escribirRFinal di, bufferLectura
+
             getchar
 
         jmp menuprincipal
         
         CAPITAL:
             println msm23
-            leerF handleFichero, SIZEOF bufferLectura, bufferLectura
+
 
             print corA
             print bufferLectura
@@ -200,6 +185,12 @@ include P3M.asm ; archivo con los macros a utilizar
             print corA
             print bufferLectura
             print corC
+
+            contarElementos RF3
+            escribirRFinal di, RF3
+            contarElementos bufferLectura
+            escribirRFinal di, bufferLectura
+
             getchar
 
         jmp menuprincipal
@@ -209,8 +200,24 @@ include P3M.asm ; archivo con los macros a utilizar
             getchar
         jmp menuprincipal
 
-        INVERTIRPALABRA:
+        INVERTIRPALABRA:    
             println msm25
+            
+            print corA
+            print bufferLectura
+            print corC
+
+            InvertirP bufferLectura
+
+            print corA
+            print bufferLectura
+            print corC  
+
+            contarElementos RF4
+            escribirRFinal di, RF4
+            contarElementos bufferLectura
+            escribirRFinal di, bufferLectura
+
             getchar
         jmp menuprincipal
 
@@ -231,6 +238,7 @@ include P3M.asm ; archivo con los macros a utilizar
 
         REPORTEFINAL:
             println msm29
+            cerrarRFinal
             getchar
         jmp menuprincipal
    
@@ -314,7 +322,7 @@ include P3M.asm ; archivo con los macros a utilizar
 
     Str_length proc
         ;--------------------------------------------------------------------;
-        ;   Recibe:     DS:[bp+4] apunta al arreglo                         ;
+        ;   Recibe:     DS:[bp+4] apunta al arreglo                          ;
         ;                                                                    ;
         ;   Devuelve:   AX= tamanio de la cadena de entrada.                 ;
         ;                                                                    ;       
@@ -482,7 +490,6 @@ include P3M.asm ; archivo con los macros a utilizar
                 jmp AUMENTAR
             ;fin etiqueta  
 
-
             LETRA_ESPACIO:
                 mov ax,[bp-4]               ;ax = size
 
@@ -496,39 +503,41 @@ include P3M.asm ; archivo con los macros a utilizar
                 jmp AUMENTAR
             ;fin etiqueta
 
-            APLICARCAPITAL:
-            	mov al,[si]                 ;al=inicio token
-
-                cmp al,61h                  ;¿es menor que 'a'?
-                jb PASAR                    ;si: Continua sin hacer cambios
-                cmp al,7ah                  ;¿es mayor que 'z'?
-                ja PASAR                     ;si: Continua sin hacer cambios
-
-
-		        sub al,20h                  ;inicio= inicio+20
-		        mov [si],al                 ;se convierte a mayuscula
-
-                mov word ptr[bp-2],1        ;anterior = espacio
-                mov word ptr[bp-4],0h       ;size =0   
-                jmp AUMENTAR
-            ;fin etiqueta   
-
             PASAR:
                 mov word ptr[bp-2],1        ;anterior = espacio
                 mov word ptr[bp-4],0h       ;size =0   
                 jmp AUMENTAR
             ;fin etiqueta
 
+            APLICARCAPITAL:
+                ;inicio funcion
+            	    mov al,[si]                 ;al=inicio token
+
+                    cmp al,61h                  ;¿es menor que 'a'?
+                    jb PASAR                    ;si: Continua sin hacer cambios
+                    cmp al,7ah                  ;¿es mayor que 'z'?
+                    ja PASAR                     ;si: Continua sin hacer cambios
+
+		            sub al,20h                  ;inicio= inicio+20
+		            mov [si],al                 ;se convierte a mayuscula
+                ;fin funcion
+
+                jmp PASAR
+            ;fin etiqueta   
+
             APLICARCAPITALFIN:
-                mov al,[si]                 ;al=inicio token
+                ;inicio funcion
+                    mov al,[si]                 ;al=inicio token
+                
+                    cmp al,61h                  ;¿es menor que 'a'?
+                    jb FIN                      ;si: FIN
+                    cmp al,7ah                  ;¿es mayor que 'z'?
+                    ja FIN                      ;si: FIN
 
-                cmp al,61h                  ;¿es menor que 'a'?
-                jb FIN                      ;si: FIN
-                cmp al,7ah                  ;¿es mayor que 'z'?
-                ja FIN                      ;si: FIN
+		            sub al,20h                  ;inicio= inicio+20
+		            mov [si],al                 ;se convierte a mayuscula
+                ;fin funcion
 
-		        sub al,20h                  ;inicio= inicio+20
-		        mov [si],al                 ;se convierte a mayuscula
                 jmp FIN
             ;fin etiqueta
 
@@ -643,11 +652,332 @@ include P3M.asm ; archivo con los macros a utilizar
     EsLetra endp
 
     Invertir proc
+        ;--------------------------------------------------------------------;
+        ;   Recibe:      DS:[bp+6] fin token                                 ;
+        ;                DS:[bp+4] inicio token                              ;
+        ;                                                                    ;
+        ;   Devuelve:    nada, pero afecta el buffer                         ;
+        ;                                                                    ;        
+        ;   Comentarios: invierte el token dado                              ; 
+        ;--------------------------------------------------------------------;   
+
+        ;ini Subrutina proglogo
+            push bp                    ;almacenamos el puntero base
+            mov  bp,sp                 ;ebp contiene la direccion de esp
+            pusha                      ;guarda los registros multiproposito
+
+
+            push word ptr[bp+4]        ;par1 = inicio token1
+            push word ptr[bp+6]        ;par2 = fin    token1
+            push offset tokenAux       ;par3=  inicio token2
+            call Copy_String           ;tenemos una copia del token para invertir
+      
+            mov di,offset tokenAux    ;di=inicio token aux
+            mov cx,[bp+4]             ;cx=inicio token1
+            mov si,[bp+6]             ;si=fin token1
+            jmp COPIA
+        ;fin Subrutinas prologo
+            COPIA:
+                mov al,byte ptr[di]
+                mov byte ptr[si],al
+
+                cmp cx,si
+                je FIN
+
+                dec si
+                inc di
+
+                jmp COPIA
+            ;fn etiqueta
+        ;Ini Codigo--
+
+
+        ;Fin Codigo--
+
+        ;ini Subrutina epilogo
+            FIN:
+                popa                    ;obtenemos el valor devuelta
+                mov sp,bp               ;esp vuelve apuntar al inicio y elimina las variables locales
+                pop bp                  ;restaura el valor del puntro base listo para el ret
+                ret 4 
+            ;fin etiqueta       
+        ;fin Subrutina epilogo
     Invertir endp
 
-    GetToken proc
-    GetToken endp
+    Copy_String proc
+        ;--------------------------------------------------------------------;
+        ;   Recibe:      DS:[bp+8]  inicio token1                            ;
+        ;                DS:[bp+6]  fin token1                               ;
+        ;                DS:[bp+4]  inicio token2                            ;
+        ;                                                                    ;
+        ;   Devuelve:    Solo afecta las cadenas enviadas                    ;
+        ;                                                                    ;        
+        ;   Comentarios: Copia token1 a token2                               ; 
+        ;--------------------------------------------------------------------;   
 
+        ;ini Subrutina proglogo
+            push bp                    ;almacenamos el puntero base
+            mov  bp,sp                 ;ebp contiene la direccion de esp
+            pusha                      ;guarda los registros multiproposito
+            mov di,[bp+8]              ;di = direccion inicio token1
+            mov si,[bp+4]              ;si = direccion inicio token2
+            mov cx,[bp+6]              ;cx = direccion fin    token2
+            inc cx
+            jmp COPIA
+        ;fin Surutina prologo
+
+        ;Ini Codigo--
+            COPIA:
+                cmp cx,di               ;¿El iterador == tamanio+1?
+                je FIN                  ;si: termina la copia
+
+                mov al,byte ptr[di]
+                mov byte ptr[si],al
+
+                inc di
+                inc si
+                jmp COPIA
+            ;fn etiqueta
+
+        ;Fin Codigo--
+
+        ;ini Subrutina epilogo
+            FIN:
+                popa                    ;obtenemos el valor devuelta
+                mov sp,bp               ;esp vuelve apuntar al inicio y elimina las variables locales
+                pop bp                  ;restaura el valor del puntro base listo para el ret
+                ret 6 
+            ;fin etiqueta
+        ;fin Subrutina epilogo    
+
+    Copy_String endp
+
+    Recorrer proc
+        ;--------------------------------------------------------------------;
+        ;   Recibe:      DS:[bp+4] apunta a la cadena                        ;
+        ;                                                                    ;
+        ;   Devuelve:    AX = INICIO TOKEN                                   ;
+        ;                BX = FIN TOKEN                                      ; 
+        ;                                                                    ;        
+        ;   Comentarios: Da uno a uno los tokens hasta terminar la cadena    ; 
+        ;--------------------------------------------------------------------;   
+
+        ;Subrutina proglogo
+            push bp                    ;almacenamos el puntero base
+            mov  bp,sp                 ;ebp contiene la direccion de esp
+            sub  sp,4                  ;se guarda espacio para dos variables
+            pusha                      ;guarda los registros multiproposito
+            mov di,[bp+4]              ;guarda el puntero a la cadena en di
+            mov word ptr[bp-2],0       ;var local anterior =0
+            mov word ptr[bp-4],0       ;var local size     =0
+            mov  si,di                 ;si=di
+            jmp GETSIG
+        ;fin Subrutina prologo
+        ;Ini Codigo--
+            GETSIG:
+                push di                     ;enviamos como parametro el caracter
+                call EsLetra       
+
+                cmp ax,0                    ;¿No es letra?
+                je NOESLETRA                ;si: operamos el caracter
+                cmp ax,1                    ;¿Es Letra
+                je LETRA                    ;si: operamos el caracter
+                cmp ax,2                    ;¿Es Espacio?
+                je ESPACIO                  ;si: operamos el caracter
+                cmp ax,3                    ;¿Es fin de cadena?
+                je FINCADENA                ;si: salgamos de la funcion
+            ;fin etiqueta    
+
+            FINCADENA:
+                mov bx,2                    ;bx=0 -> letra
+                cmp [bp-2],bx               ;¿Ant == letra?
+                je LETRA_FINCADENA
+                jmp FIN
+            ;fin etiqueta
+
+            LETRA:
+                mov bx,0                    ;bx=0 -> no es letra
+                cmp [bp-2],bx               ;¿Ant == NOesLetra?
+                je NOESLETRA_LETRA
+
+                mov bx,1                    ;bx=0 -> espacio
+                cmp [bp-2],bx               ;¿Ant == espacio?
+                je ESPACIO_LETRA
+
+                mov bx,2                    ;bx=0 -> letra
+                cmp [bp-2],bx               ;¿Ant == letra?
+                je LETRA_LETRA
+            ;fin etiqueta  
+
+            ESPACIO:
+                mov bx,2                    ;bx=0 -> letra
+                cmp [bp-2],bx               ;¿Ant == letra?
+                je LETRA_ESPACIO
+
+                mov word ptr[bp-2],1        ;anterior = espacio
+                mov word ptr[bp-4],0h       ;size =0   
+                jmp AUMENTAR      
+            ;fin etiqueta       
+
+            NOESLETRA:
+                xor si,si                   ;para validar
+                mov word ptr[bp-2],0        ;anterior = no es letra
+                mov word ptr[bp-4],0        ;size =0 
+                jmp AUMENTAR
+            ;fin etiqueta        
+            ;----notacion: ant_actual----------
+            LETRA_FINCADENA:
+                mov ax,[bp-4]               ;ax = size
+                cmp ax,1                    ;¿ax > 1?
+                ja APLICARCAPITALFIN        ;si: aplicar letra capital al token
+                jmp FIN
+            ;fin etiqueta
+          
+            ESPACIO_LETRA:
+                mov ax,1                    ;ax = 1
+                mov word ptr[bp-4],ax       ;size=ax     
+                mov si,di                   ;inicio=puntero
+                mov word ptr[bp-2],2        ;anterior=letra
+                jmp AUMENTAR
+            ;fin etiqueta  
+
+            NOESLETRA_LETRA:
+                mov word ptr[bp-4],0        ;size =0   
+                mov word ptr[bp-2],2        ;anterior = letra
+                jmp AUMENTAR
+            ;fin etiqueta  
+
+            LETRA_LETRA:     
+                mov ax,[bp-4]               ;ax = size
+                inc ax                      ;ax++
+                mov word ptr[bp-4],ax       ;size=ax , size++    
+                mov word ptr[bp-2],2        ;anterior = letra
+                jmp AUMENTAR
+            ;fin etiqueta  
+
+            LETRA_ESPACIO:
+                mov ax,[bp-4]               ;ax = size
+
+                cmp si,0                    ;si tiene alguna direccion
+                je  PASAR                   ;no hacer transformacon
+                cmp ax,1                    ;¿ax > 1?
+                ja APLICARCAPITAL           ;si: aplicar letra capital al token
+
+                mov word ptr[bp-2],1        ;anterior = espacio
+                mov word ptr[bp-4],0h       ;size =0   
+                jmp AUMENTAR
+            ;fin etiqueta
+
+            PASAR:
+                mov word ptr[bp-2],1        ;anterior = espacio
+                mov word ptr[bp-4],0h       ;size =0   
+                jmp AUMENTAR
+            ;fin etiqueta
+
+            APLICARCAPITAL:
+                ;inicia funcion
+                    mov cx,di                   ;cx=fin token+1
+                    dec cx                      ;cx--,fin token
+                    push cx                     ;par1=fin token
+                    push si                     ;par2=ini token
+                    call invertir               ;llamada funcion
+                ;fin funcion
+
+                jmp PASAR
+            ;fin etiqueta   
+
+            APLICARCAPITALFIN:
+
+                ;inicia funcion
+                    mov cx,di                   ;cx=fin token+1
+                    dec cx                      ;cx--,fin token
+                    push cx                     ;par1=fin token
+                    push si                     ;par2=ini token
+                    call invertir               ;llamada funcion
+                ;fin funcion
+
+                jmp FIN
+            ;fin etiqueta
+
+            AUMENTAR:
+                inc di
+                jmp GETSIG  
+            ;fin cadena 
+
+        ;Fin Codigo--
+
+        ;ini Subrutina epilogo
+            FIN:
+                popa                    ;obtenemos el valor devuelta
+                mov sp,bp               ;esp vuelve apuntar al inicio y elimina las variables locales
+                pop bp                  ;restaura el valor del puntro base listo para el ret
+                ret 2 
+            ;fin etiqueta
+        ;fin Subrutina epilogo 
+
+    Recorrer endp
+
+    Clear_String proc
+        ;--------------------------------------------------------------------;
+        ;   Recibe:      DS:[bp+4] cadena                                    ;
+        ;                                                                    ;
+        ;   Devuelve:    nada                                                ;
+        ;                                                                    ;        
+        ;   Comentarios: Limpia la cadena dada.                              ; 
+        ;--------------------------------------------------------------------;   
+
+        ;ini Subrutina proglogo
+            push bp                    ;almacenamos el puntero base
+            mov  bp,sp                 ;ebp contiene la direccion de esp
+            push di                    ;guardamos di porque se utilizara
+            push ax                    ;guardamos ax porque se utilizara
+        ;fin Subrutina prologo
+
+        ;Ini Codigo--
+            mov di,[bp+4]             ;guarda Parametro1 en di
+            xor ax,ax                 ;ax=0 
+
+            L1:
+                cmp byte PTR[di],0      ;¿final de cadena?
+                je  FIN                 ;si: termina
+                inc di                  ;no: apunta al siguiente
+                mov byte ptr[di],0      ;suma 1 a la cuenta 
+                jmp L1
+            ;fin etiqueta
+
+        ;Fin Codigo--
+
+
+        ;ini Subrutina epilogo
+            FIN:
+                pop ax                  ;obtenemos ax despues de su uso
+                pop di                  ;obtenemos di despues de su uso
+                mov sp,bp               ;esp vuelve apuntar al inicio y elimina las variables locales
+                pop bp                  ;restaura el valor del puntro base listo para el ret
+                ret 2 
+            ;fin etiqueta  
+        ;fin Subrutna epilogo
+
+    Clear_String endp
+
+
+    PrintAl proc
+        push ax
+        push dx
+
+        mov ah,02h
+    	mov dl,al
+    	int 21h
+        
+        pop dx
+        pop ax
+    PrintAl endp
+
+    GetTime proc
+    GetTime endp
+
+    GetData proc
+    GetData endp
 
 ;====================Fin de Procedimientos =========================
 
