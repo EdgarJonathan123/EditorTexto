@@ -445,6 +445,7 @@ include P3M.asm ; archivo con los macros a utilizar
             ;fin etiqueta       
 
             NOESLETRA:
+                xor si,si                   ;para validar
                 mov word ptr[bp-2],0        ;anterior = no es letra
                 mov word ptr[bp-4],0        ;size =0 
                 jmp AUMENTAR
@@ -484,6 +485,9 @@ include P3M.asm ; archivo con los macros a utilizar
 
             LETRA_ESPACIO:
                 mov ax,[bp-4]               ;ax = size
+
+                cmp si,0                    ;si tiene alguna direccion
+                je  PASAR                   ;no hacer transformacon
                 cmp ax,1                    ;¿ax > 1?
                 ja APLICARCAPITAL           ;si: aplicar letra capital al token
 
@@ -492,27 +496,38 @@ include P3M.asm ; archivo con los macros a utilizar
                 jmp AUMENTAR
             ;fin etiqueta
 
-
-
-
             APLICARCAPITAL:
-                ;print txt
             	mov al,[si]                 ;al=inicio token
-		        mov ah,20h                  ;ah=20
-		        sub al,ah                   ;inicio= inicio+20
+
+                cmp al,61h                  ;¿es menor que 'a'?
+                jb PASAR                    ;si: Continua sin hacer cambios
+                cmp al,7ah                  ;¿es mayor que 'z'?
+                ja PASAR                     ;si: Continua sin hacer cambios
+
+
+		        sub al,20h                  ;inicio= inicio+20
 		        mov [si],al                 ;se convierte a mayuscula
 
                 mov word ptr[bp-2],1        ;anterior = espacio
                 mov word ptr[bp-4],0h       ;size =0   
-                inc di
-                jmp GETSIG 
+                jmp AUMENTAR
             ;fin etiqueta   
 
+            PASAR:
+                mov word ptr[bp-2],1        ;anterior = espacio
+                mov word ptr[bp-4],0h       ;size =0   
+                jmp AUMENTAR
+            ;fin etiqueta
 
             APLICARCAPITALFIN:
                 mov al,[si]                 ;al=inicio token
-		        mov ah,20h                  ;ah=20
-		        sub al,ah                   ;inicio= inicio+20
+
+                cmp al,61h                  ;¿es menor que 'a'?
+                jb FIN                      ;si: FIN
+                cmp al,7ah                  ;¿es mayor que 'z'?
+                ja FIN                      ;si: FIN
+
+		        sub al,20h                  ;inicio= inicio+20
 		        mov [si],al                 ;se convierte a mayuscula
                 jmp FIN
             ;fin etiqueta
@@ -581,6 +596,10 @@ include P3M.asm ; archivo con los macros a utilizar
             VerficaEspacio:
                 cmp al,20h                  ;¿es un espacio?
                 je Espacio                  ;si: Espacio
+                cmp al,10                   ;¿es retorno de carro?
+                je Espacio                  ;si: tratarlo como espacio
+                cmp al,13                   ;¿es salto de linea?
+                je Espacio                  ;si: tratarlo como espacio
                 jmp VerificaFinCadena       ;no: verificaFinCadena
             ;fin etiqueta
 
@@ -602,7 +621,7 @@ include P3M.asm ; archivo con los macros a utilizar
                 jmp FIN  
             ;fin etiqueta
 
-            FinCadena:
+            FinCadena:       
                 mov ax,3                    ;devuelve 3
                 jmp FIN  
             ;fin etiqueta       
@@ -623,13 +642,11 @@ include P3M.asm ; archivo con los macros a utilizar
         ;fin etiqueta    
     EsLetra endp
 
+    Invertir proc
+    Invertir endp
 
-
-    EsMayuscula proc 
-    EsMayuscula endp
-
-    EsMinuscula proc
-    EsMinuscula endp
+    GetToken proc
+    GetToken endp
 
 
 ;====================Fin de Procedimientos =========================
